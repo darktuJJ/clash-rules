@@ -1,3 +1,14 @@
+# ============================================================
+# ACL4SSR_Online_Full_WithIcon.yaml（darktuJJ 修正版）
+# 上游来源：https://raw.githubusercontent.com/mihomo-party-org/override-hub/main/yaml/ACL4SSR_Online_Full_WithIcon.yaml
+# 同步日期：2026-10-12
+# 说明：保持上游结构不变，仅修正以下源自本文件的问题（改动处均以【修改】注释标出）：
+#   1. rule-providers.ChinaCompanyIp：behavior 由 ipcidr 改为 classical
+#      （列表内容为 classical 格式，原写法在 mihomo 下加载 0 条）
+#   2. rules：RULE-SET,ChinaCompanyIp 追加 no-resolve
+#   3. rules：GEOIP,CN 追加 no-resolve
+# 未加入任何 AI 规则或策略组改动，这些放在 Clash Party 本地覆写中（见 overrides/ 目录）。
+# ============================================================
 proxy-groups:
   - name: 节点选择
     icon: https://testingcf.jsdelivr.net/gh/Koolson/Qure@master/IconSet/Color/Proxy.png
@@ -544,7 +555,9 @@ rule-providers:
   ChinaCompanyIp:
     url: https://testingcf.jsdelivr.net/gh/ACL4SSR/ACL4SSR@master/Clash/ChinaCompanyIp.list
     path: ./ruleset/ChinaCompanyIp.list
-    behavior: ipcidr
+    # 【修改】上游为 behavior: ipcidr，但该列表每行是 "IP-CIDR,x.x.x.x/x,no-resolve" 的 classical 写法，
+    # mihomo 按 ipcidr 解析会报 invalid Ipcidr，导致加载 0 条；改为 classical 后可正常加载
+    behavior: classical
     interval: 86400
     format: text
     type: http
@@ -586,7 +599,9 @@ rules:
   - "RULE-SET,ProxyMedia,国外媒体"
   - "RULE-SET,ProxyGFWlist,节点选择"
   - "RULE-SET,ChinaDomain,全球直连"
-  - "RULE-SET,ChinaCompanyIp,全球直连"
+  # 【修改】追加 no-resolve：纯 IP 规则集，避免为未命中的域名触发 DNS 解析
+  - "RULE-SET,ChinaCompanyIp,全球直连,no-resolve"
   - "RULE-SET,Download,全球直连"
-  - "GEOIP,CN,全球直连"
+  # 【修改】追加 no-resolve：域名请求到此不再先做 DNS 解析，直接交给 MATCH
+  - "GEOIP,CN,全球直连,no-resolve"
   - "MATCH,漏网之鱼"
