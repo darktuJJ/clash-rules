@@ -11,7 +11,8 @@ Sub-Store 文件脚本：把组合订阅的节点填进 Surge 模板，并加上
 */
 
 // ↓↓↓ 在 Sub-Store 里填写，仓库中保持占位文本 ↓↓↓
-const MANAGED_URL = '这里填你的 Sub-Store 文件链接';
+// 可在脚本链接末尾用 #noCache&url=编码后的链接 传入，避免把私人链接写进仓库
+const MANAGED_URL = (typeof $arguments !== 'undefined' && $arguments.url) ? decodeURIComponent($arguments.url) : '这里填你的 Sub-Store 文件链接';
 // 组合订阅名称
 const COLLECTION_NAME = '组合订阅';
 // 托管配置更新间隔（秒），43200 = 12 小时
