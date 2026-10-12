@@ -1,0 +1,169 @@
+# ============================================================
+# 【Clash Party 本地覆写·参考模板（已脱敏）】个人合并覆写
+# 这是 Clash Party「覆写」里用的 YAML，不是规则文件本体，也没有合并进 ACL4SSR_Online_Full_WithIcon.yaml。
+# 由几份个人覆写合并而成：直连规则、代理规则、DeepSeek 直连、AI 规则，
+# 另外新增了 AI专线 / Cursor链路 两个策略组和 STUN 拦截。
+#
+# ⚠️ 使用前必须替换的占位符（不替换会导致配置加载失败）：
+#   <AI主力节点>       → 你用于 AI 的固定节点名（必须与订阅里的节点名完全一致）
+#   <Polymarket节点A>  → Polymarket 主站使用的节点名
+#   <Polymarket节点B>  → Polymarket data-api 使用的节点名
+#   第 3 段被注释掉的「自有服务域名」示例 → 按需取消注释并改成你自己的域名
+# 下面用到的 美国节点 / 日本节点 / 狮城节点 / 台湾节点 / 手动切换 / 节点选择，
+# 都是 ACL4SSR_Online_Full_WithIcon 模板自带的策略组。
+#
+# 作用范围：建议不勾选「全局」，只挂在使用 ACL4SSR 模板的那个订阅上
+#   （其他订阅里可能没有上面这些节点或策略组，设成全局会让它们加载失败）。
+# 在该订阅覆写列表中的顺序：
+#   [监听端口类覆写] → 本文件 → [会生成 IN-PORT 规则的覆写，如有] → DNS与QUIC防护
+#   （+rules 是前插：越靠后应用的覆写，规则越靠前。这样 IN-PORT 规则排在本文件之前，
+#    QUIC 拒绝仍是第一条规则。）
+# 本文件内部的规则顺序会原样保留：拦截 → 进程 → 直连 → AI → Cursor → 其他代理。
+# ============================================================
+
++proxy-groups:
+  # AI 统一出口：默认固定一个节点，各家 AI 看到同一个 IP
+  - name: AI专线
+    type: select
+    proxies:
+      - <AI主力节点>
+      - 美国节点
+      - 日本节点
+      - 狮城节点
+      - 台湾节点
+  # Cursor / Grok Bot：主用 <AI主力节点>，连续失败自动切到备用组
+  - name: Cursor链路
+    type: fallback
+    proxies:
+      - <AI主力节点>
+      - 台湾节点
+      - 日本节点
+    url: https://www.gstatic.com/generate_204
+    interval: 120
+    timeout: 3000
+    max-failed-times: 3
+    lazy: false
+
++rules:
+  # ==================== 1. 拦截 ====================
+  # WebRTC 防泄漏：如果主力节点不支持 UDP，STUN 会回落 DIRECT 暴露真实 IP
+  - AND,((NETWORK,UDP),(DST-PORT,3478)),REJECT
+  - AND,((NETWORK,UDP),(DST-PORT,19302)),REJECT
+
+  # ==================== 2. 进程 ====================
+  - PROCESS-NAME,Grok Bot.exe,Cursor链路
+
+  # ==================== 3. 直连 ====================
+  # 本机
+  - DOMAIN,localhost,DIRECT
+  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR6,::1/128,DIRECT,no-resolve
+  # 自有服务（NAS 等）：按需取消注释并改成你自己的域名
+  # - DOMAIN-SUFFIX,example.com,DIRECT
+  # DeepSeek（原 DeepSeek直连 JS 只是把这三条插到最前面，用 YAML 前插效果一样）
+  - DOMAIN-SUFFIX,deepseek.com,DIRECT
+  - DOMAIN-SUFFIX,deepseeksvc.com,DIRECT
+  # 国内常用服务
+  - DOMAIN-SUFFIX,icloud.com.cn,DIRECT
+  - DOMAIN-SUFFIX,wolai.com,DIRECT
+  - DOMAIN-SUFFIX,163.com,DIRECT
+  - DOMAIN-SUFFIX,aliyun.com,DIRECT
+  - DOMAIN,api.douyin.com,DIRECT
+  - DOMAIN,api.ctrip.com,DIRECT
+
+  # ==================== 4. AI（AI专线）====================
+  # ---- OpenAI / ChatGPT / Codex / Sora ----
+  - DOMAIN-SUFFIX,openai.com,AI专线
+  - DOMAIN-SUFFIX,chatgpt.com,AI专线
+  - DOMAIN-SUFFIX,chat.com,AI专线
+  - DOMAIN-SUFFIX,sora.com,AI专线
+  - DOMAIN-SUFFIX,ai.com,AI专线
+  - DOMAIN-SUFFIX,oaistatic.com,AI专线
+  - DOMAIN-SUFFIX,oaiusercontent.com,AI专线
+  - DOMAIN-SUFFIX,openaicom.imgix.net,AI专线
+  - DOMAIN-SUFFIX,openaiapi-site.azureedge.net,AI专线
+  - DOMAIN,openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net,AI专线
+  - DOMAIN,production-openaicom-storage.azureedge.net,AI专线
+  - DOMAIN,openaicomproductionae4b.blob.core.windows.net,AI专线
+  - DOMAIN,chat.openai.com.cdn.cloudflare.net,AI专线
+  - DOMAIN,openai-api.arkoselabs.com,AI专线
+  - DOMAIN,client-api.arkoselabs.com,AI专线
+  - DOMAIN-SUFFIX,chatgpt.livekit.cloud,AI专线
+  - DOMAIN,o33249.ingest.sentry.io,AI专线
+  - DOMAIN,o207216.ingest.sentry.io,AI专线
+  # Statsig 由多个网站共用，ChatGPT 初始化依赖它，无法按网站拆开
+  - DOMAIN-SUFFIX,statsig.com,AI专线
+  - DOMAIN-SUFFIX,statsigapi.net,AI专线
+  - DOMAIN-SUFFIX,featuregates.org,AI专线
+  - DOMAIN-SUFFIX,featureassets.org,AI专线
+  - DOMAIN-SUFFIX,prodregistryv2.org,AI专线
+  # ---- Anthropic / Claude ----
+  - DOMAIN-SUFFIX,anthropic.com,AI专线
+  - DOMAIN-SUFFIX,claude.ai,AI专线
+  - DOMAIN-SUFFIX,claude.com,AI专线
+  - DOMAIN-SUFFIX,claudeusercontent.com,AI专线
+  - DOMAIN-SUFFIX,claudemcpcontent.com,AI专线
+  # ---- Google Gemini / AI Studio / NotebookLM / DeepMind ----
+  # 必须排在第 6 段 googleapis.com→节点选择 之前
+  - DOMAIN-SUFFIX,gemini.google.com,AI专线
+  - DOMAIN-SUFFIX,gemini.google,AI专线
+  - DOMAIN-SUFFIX,aistudio.google.com,AI专线
+  - DOMAIN-SUFFIX,makersuite.google.com,AI专线
+  - DOMAIN-SUFFIX,generativeai.google,AI专线
+  - DOMAIN-SUFFIX,ai.google.dev,AI专线
+  - DOMAIN-SUFFIX,generativelanguage.googleapis.com,AI专线
+  - DOMAIN-SUFFIX,proactivebackend-pa.googleapis.com,AI专线
+  - DOMAIN-SUFFIX,geller-pa.googleapis.com,AI专线
+  - DOMAIN-SUFFIX,aisandbox-pa.googleapis.com,AI专线
+  - DOMAIN-SUFFIX,robinfrontend-pa.googleapis.com,AI专线
+  - DOMAIN-SUFFIX,bard.google.com,AI专线
+  - DOMAIN-SUFFIX,notebooklm.google.com,AI专线
+  - DOMAIN-SUFFIX,notebooklm.google,AI专线
+  - DOMAIN-SUFFIX,deepmind.com,AI专线
+  - DOMAIN-SUFFIX,deepmind.google,AI专线
+  - DOMAIN-SUFFIX,labs.google,AI专线
+  - DOMAIN,alkalimakersuite-pa.clients6.google.com,AI专线
+  - DOMAIN,alkalicore-pa.clients6.google.com,AI专线
+  - DOMAIN,waa-pa.clients6.google.com,AI专线
+  # ---- xAI / Grok ----
+  - DOMAIN-SUFFIX,x.ai,AI专线
+  - DOMAIN-SUFFIX,grok.com,AI专线
+  - DOMAIN,grok.x.com,AI专线
+  # ---- Perplexity ----
+  - DOMAIN-SUFFIX,perplexity.ai,AI专线
+  - DOMAIN-SUFFIX,perplexity.com,AI专线
+  - DOMAIN-SUFFIX,pplx.ai,AI专线
+  - DOMAIN,pplx-res.cloudinary.com,AI专线
+  # ---- 其他 AI ----
+  - DOMAIN-SUFFIX,mistral.ai,AI专线
+  - DOMAIN-SUFFIX,githubcopilot.com,AI专线
+  - DOMAIN,copilot-proxy.githubusercontent.com,AI专线
+  # ---- 验证 ----
+  # 精确域名；其他使用 Cloudflare Turnstile 的网站，验证时也会走 AI专线
+  - DOMAIN,challenges.cloudflare.com,AI专线
+  # ---- 默认关闭：打开后会把其他网站一起带走 ----
+  # - DOMAIN-SUFFIX,host.livekit.cloud,AI专线      # ChatGPT 语音
+  # - DOMAIN-SUFFIX,turn.livekit.cloud,AI专线
+  # - DOMAIN-SUFFIX,stripe.com,AI专线              # 开通 Plus / Pro 付款时
+  # - DOMAIN-SUFFIX,stripe.network,AI专线
+  # - DOMAIN-SUFFIX,stripecdn.com,AI专线
+  # - DOMAIN-SUFFIX,workos.com,AI专线              # 企业 SSO
+  # - DOMAIN-SUFFIX,intercom.io,AI专线             # 网页客服气泡
+  # - DOMAIN-SUFFIX,intercomcdn.com,AI专线
+
+  # ==================== 5. Cursor / Grok Bot（Cursor链路）====================
+  - DOMAIN-SUFFIX,cursorvm.com,Cursor链路
+  - DOMAIN-SUFFIX,cursor.sh,Cursor链路
+  - DOMAIN-SUFFIX,cursor.com,Cursor链路
+  - DOMAIN-SUFFIX,cursorapi.com,Cursor链路
+  - DOMAIN-SUFFIX,cursor-cdn.com,Cursor链路
+  - DOMAIN-SUFFIX,anysphere.co,Cursor链路
+
+  # ==================== 6. 其他代理 ====================
+  # Polymarket：更具体的 data-api 必须放在 polymarket.com 之前，否则 data-api 永远走不到 <Polymarket节点B>
+  - DOMAIN,data-api.polymarket.com,<Polymarket节点B>
+  - DOMAIN-SUFFIX,polymarket.com,<Polymarket节点A>
+  - DOMAIN-KEYWORD,polymarket,<Polymarket节点A>
+  - DOMAIN-SUFFIX,instagram.com,手动切换
+  # 其余 googleapis.com 走节点选择（Gemini 相关子域名已在第 4 段先命中）
+  - DOMAIN-SUFFIX,googleapis.com,节点选择

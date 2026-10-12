@@ -1,0 +1,50 @@
+# ============================================================
+# 【Clash Party 本地覆写·参考副本】DNS与QUIC防护（单独一个覆写）
+# 作用范围：可以挂在每个订阅上。在订阅覆写列表中放在最后，保证 UDP 443 拒绝是第一条规则。
+# 依赖 ACL4SSR 模板自带的「漏网之鱼」策略组（境外 DNS 经它走代理）。
+# 相比旧版本改了两处（用【改进】标出）：
+#   1. default-nameserver 从 tls://223.5.5.5 改为 223.5.5.5（普通 UDP）。它只用来解析 DoH/DoT 服务器
+#      本身的域名，用普通 UDP 更稳，也不会因为 TLS 握手失败而解析不出来
+#   2. fake-ip-filter 加入 Windows 联网检测（msftconnecttest / msftncsi）和 STUN 域名，
+#      避免系统误报「无 Internet」，也避免 WebRTC 拿到假 IP
+# ============================================================
+
+# 境外 DNS 走代理，并拒绝 QUIC
++rules:
+  - AND,((NETWORK,UDP),(DST-PORT,443)),REJECT
+
+dns!:
+  enable: true
+  ipv6: false
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  respect-rules: true
+  use-hosts: false
+  use-system-hosts: false
+  # 【改进】普通 UDP，只用来解析下面 DoH 服务器自己的域名
+  default-nameserver:
+    - 223.5.5.5
+  proxy-server-nameserver:
+    - https://doh.pub/dns-query
+  nameserver:
+    - "tls://8.8.8.8#漏网之鱼"
+    - "tls://1.1.1.1#漏网之鱼"
+  fallback: []
+  nameserver-policy:
+    "geosite:cn,private":
+      - https://doh.pub/dns-query
+  fake-ip-filter:
+    - +.lan
+    - +.local
+    - time.*.com
+    - ntp.*.com
+    - +.market.xiaomi.com
+    - +.deepseek.com
+    - +.deepseeksvc.com
+    # 【改进】Windows 联网检测
+    - +.msftconnecttest.com
+    - +.msftncsi.com
+    # 【改进】STUN（WebRTC）
+    - +.stun.*.*
+    - +.stun.*.*.*
+    - stun.l.google.com
