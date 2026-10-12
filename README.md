@@ -1,14 +1,31 @@
 # clash-surge-rules
 
-这是我自己维护的 mihomo（Clash Meta）规则配置，基于 mihomo-party-org/override-hub 的
-`ACL4SSR_Online_Full_WithIcon.yaml`。**只修正上游文件本身的问题**，其余保持和上游一致。
+我自己用的代理规则配置，同时维护 **Clash（mihomo / Clash Party）** 和 **Surge（iOS / macOS）** 两套，节点都由 Sub-Store 的「组合订阅」提供。
 
-## 用途
+- **Clash 部分**：基于 mihomo-party-org/override-hub 的 `ACL4SSR_Online_Full_WithIcon.yaml`，**只修正上游文件本身的问题**；个人定制（AI 分流、专用策略组、DNS 等）放在 Clash Party 本地覆写里，模板见 [`overrides/`](overrides/)。
+- **Surge 部分**：策略组和规则顺序对齐上面的 Clash 模板，并移植了个人覆写里的通用部分；节点和托管链接由 Sub-Store 脚本填入，仓库里不放私人信息。
 
-- 在 Sub-Store 里作为「组合订阅」的规则模板，替换原来的上游地址。
-- 修正上游在 mihomo 下实际不生效、或者会多做一次 DNS 解析的规则。
-- 个人定制（AI 分流、专用策略组等）**不放进规则文件**，而是放在 Clash Party 本地覆写里。
-  已脱敏的参考模板见 [`overrides/`](overrides/)。
+## 目录结构
+
+```
+.
+├── ACL4SSR_Online_Full_WithIcon.yaml   # Clash 规则模板（修正版），Sub-Store / Clash Party 引用
+├── ACL4SSR/                            # 去掉 URL-REGEX 的 ACL4SSR 规则列表，Clash 和 Surge 共用
+│   ├── ChinaMedia.list
+│   ├── ProxyMedia.list
+│   └── Download.list
+├── overrides/                          # Clash Party 本地覆写模板（已脱敏，需手动添加）
+│   ├── 个人合并覆写.yaml
+│   ├── DNS与QUIC防护.yaml
+│   └── 开启节点UDP.js
+└── Surge/
+    ├── Surge.conf                      # Surge 托管配置模板（Sub-Store 远程文件来源）
+    ├── Sub-Store脚本.js                # Sub-Store 文件脚本：填节点 + 加 MANAGED-CONFIG 首行
+    ├── 本地模块示例.sgmodule           # 私人域名 / 内网网段等放本地模块
+    └── Scripts/                        # 面板脚本：网络延迟、配置重载、机场信息
+```
+
+# Clash / mihomo
 
 ## 上游来源
 
@@ -18,13 +35,15 @@
 
 ## 修改清单
 
-改动处在文件里都用 `【修改】` 注释标出。
+改动处在 YAML 里都有 `【修改】` 注释（第 4、5 条除外，见说明）。
 
 | # | 位置 | 上游原样 | 修改后 | 原因 |
 |---|------|----------|--------|------|
-| 1 | `rule-providers.ChinaCompanyIp.behavior` | `ipcidr` | `classical` | 列表每一行都是 `IP-CIDR,x.x.x.x/x,no-resolve` 这种 classical 写法。按 ipcidr 解析时，mihomo 每行报一次 `invalid Ipcidr`，最后一条都加载不上。改成 classical 后，mihomo v1.19.27 实测加载 **208 条** |
+| 1 | `rule-providers.ChinaCompanyIp.behavior` | `ipcidr` | `classical` | 列表是 `IP-CIDR,x.x.x.x/x,no-resolve` 这种 classical 写法，按 ipcidr 解析时每行报 `invalid Ipcidr`，一条都加载不上。改完 mihomo v1.19.27 实测加载 **208 条** |
 | 2 | `rules` | `RULE-SET,ChinaCompanyIp,全球直连` | 末尾加 `,no-resolve` | 纯 IP 规则集，没必要为没命中的域名先做一次 DNS 解析 |
-| 3 | `rules` | `GEOIP,CN,全球直连` | 末尾加 `,no-resolve` | 同上：域名请求走到这里直接交给 `MATCH,漏网之鱼`，不再多一次 DNS 解析和等待 |
+| 3 | `rules` | `GEOIP,CN,全球直连` | 末尾加 `,no-resolve` | 域名请求走到这里直接交给 `MATCH,漏网之鱼`，不再多一次 DNS 解析 |
+| 4 | `rule-providers.ChinaDomain.behavior` | `domain` | `classical` | 列表里混有 IP 段等 classical 规则，按 domain 解析时不生效 |
+| 5 | `ChinaMedia` / `ProxyMedia` / `Download` 的 `url` | ACL4SSR 原始列表 | 本仓库 [`ACL4SSR/`](ACL4SSR/) 下的副本 | 去掉了 mihomo 不支持的 `URL-REGEX` 规则（Surge / QuanX 写法），避免加载报错；Surge 配置也引用这几份 |
 
 > 第 3 条的副作用：没被前面 `ChinaDomain` 等规则命中的国内域名，以前会先解析成 IP，再按 GEOIP 判断要不要直连；
 > 现在会直接走「漏网之鱼」。如果你希望国内站点尽量直连，可以把第 3 条改回去。
@@ -33,7 +52,7 @@
 - 修改前：`ChinaCompanyIp` 规则数为 0，日志里有 208 条 `invalid Ipcidr`。
 - 修改后：规则数为 208，没有任何警告，`mihomo -t` 校验通过。
 
-## 使用方法
+## 使用方法（Clash）
 
 ### 在 Sub-Store 中使用（推荐）
 
@@ -95,7 +114,7 @@ curl -fsSL -o /tmp/upstream.yaml \
 # 2. 对比上游和本仓库（忽略所有注释行）
 diff <(grep -v '^\s*#' /tmp/upstream.yaml) <(grep -v '^\s*#' ACL4SSR_Online_Full_WithIcon.yaml)
 
-# 3. 用上游覆盖本仓库文件，重新做「修改清单」里的 3 处改动，并更新文件头部的「同步日期」
+# 3. 用上游覆盖本仓库文件，重新做「修改清单」里的改动（第 5 条记得把 3 个 url 改回本仓库），并更新文件头部的「同步日期」
 
 # 4. 可选：用 mihomo 校验
 mihomo -t -f ACL4SSR_Online_Full_WithIcon.yaml
@@ -106,6 +125,8 @@ git push
 ```
 
 如果上游以后自己修好了某一处（比如 `ChinaCompanyIp` 改成了 classical），同步时就把对应的改动去掉，并更新修改清单。
+
+# Surge
 
 ## Surge 托管配置（Surge/）
 
@@ -154,7 +175,12 @@ Surge →「配置」→「从 URL 下载配置」，填上一步的 Sub-Store �
 > 因此「指定某个节点」的私人规则、机场流量信息（`http://sub.info?url=...`）策略组都放不进模块，
 > 需要在设备本地另建配置（例如用 `#!include` 引用托管配置的 `[Proxy]`，自己写 `[Proxy Group]` / `[Rule]`）。
 
-### 5. 策略组对照
+### 5. 规则顺序
+
+`Surge.conf` 的 `[Rule]` 顺序：拒绝 QUIC（UDP 443）→ 个人覆写移植部分（拦截 → 直连 → AI专线 → Cursor链路 → 其他代理，Polymarket 走「香港节点」）→ 少量 Surge 自用规则 → ACL4SSR 规则集（顺序与 Clash 模板一致）→ `GEOIP,CN` → `FINAL,漏网之鱼`。
+本地模块里的规则会排在这些前面。
+
+### 6. 策略组对照
 
 策略组名称与 Clash 模板一致（节点选择、手动切换、自动选择、电报消息、OpenAi、AI-UNHK、油管视频、奈飞视频……漏网之鱼，
 以及 香港/日本/美国/台湾/狮城/韩国/奈飞节点）。Surge 额外有「谷歌云」智能组（自建 GCP 节点）和个人覆写移植的「AI专线」「Cursor链路」。
