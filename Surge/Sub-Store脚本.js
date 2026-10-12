@@ -25,6 +25,8 @@ const proxies = await produceArtifact({
   type: 'collection',
   name: COLLECTION_NAME,
   platform: 'Surge',
+  // 节点是 AnyTLS 协议，Sub-Store 默认会当作 Surge 不支持而过滤掉；新版 Surge 已支持，这里强制保留
+  produceOpts: { 'include-unsupported-proxy': true },
 });
 
 if (!/^#\{proxies\}[ \t]*$/m.test(conf)) {
