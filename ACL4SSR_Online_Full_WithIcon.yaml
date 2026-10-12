@@ -525,14 +525,14 @@ rule-providers:
     format: text
     type: http
   ChinaMedia:
-    url: https://testingcf.jsdelivr.net/gh/darktuJJ/clash-rules@main/ACL4SSR/ChinaMedia.list
+    url: https://testingcf.jsdelivr.net/gh/darktuJJ/clash-surge-rules@main/ACL4SSR/ChinaMedia.list
     path: ./ruleset/ChinaMedia.list
     behavior: classical
     interval: 86400
     format: text
     type: http
   ProxyMedia:
-    url: https://testingcf.jsdelivr.net/gh/darktuJJ/clash-rules@main/ACL4SSR/ProxyMedia.list
+    url: https://testingcf.jsdelivr.net/gh/darktuJJ/clash-surge-rules@main/ACL4SSR/ProxyMedia.list
     path: ./ruleset/ProxyMedia.list
     behavior: classical
     interval: 86400
@@ -562,7 +562,7 @@ rule-providers:
     format: text
     type: http
   Download:
-    url: https://testingcf.jsdelivr.net/gh/darktuJJ/clash-rules@main/ACL4SSR/Download.list
+    url: https://testingcf.jsdelivr.net/gh/darktuJJ/clash-surge-rules@main/ACL4SSR/Download.list
     path: ./ruleset/Download.list
     behavior: classical
     interval: 86400

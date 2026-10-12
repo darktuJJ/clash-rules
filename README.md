@@ -1,4 +1,4 @@
-# clash-rules
+# clash-surge-rules
 
 这是我自己维护的 mihomo（Clash Meta）规则配置，基于 mihomo-party-org/override-hub 的
 `ACL4SSR_Online_Full_WithIcon.yaml`。**只修正上游文件本身的问题**，其余保持和上游一致。
@@ -44,7 +44,7 @@
    ```
 3. 改成本仓库的地址：
    ```
-   https://raw.githubusercontent.com/darktuJJ/clash-rules/main/ACL4SSR_Online_Full_WithIcon.yaml
+   https://raw.githubusercontent.com/darktuJJ/clash-surge-rules/main/ACL4SSR_Online_Full_WithIcon.yaml
    ```
 4. 保存后，在 Clash Party 里手动更新一次对应的订阅。
 5. 检查是否生效：
@@ -106,3 +106,46 @@ git push
 ```
 
 如果上游以后自己修好了某一处（比如 `ChinaCompanyIp` 改成了 classical），同步时就把对应的改动去掉，并更新修改清单。
+
+## Surge 托管配置（Surge/）
+
+`Surge/` 目录是给 Surge（iOS / macOS 通用）用的托管配置模板，同样经 Sub-Store 生成。
+**模板里没有任何私人信息**：节点由 Sub-Store 填进 `#{proxies}` 占位符，托管链接只写在 Sub-Store 里。
+
+| 文件 | 说明 |
+|------|------|
+| `Surge/Surge.conf` | 配置模板：策略组按地区正则自动筛选节点，规则用 ConnersHua/RuleGo |
+| `Surge/Sub-Store脚本.js` | Sub-Store 文件脚本：填入组合订阅节点，并加上 `#!MANAGED-CONFIG` 首行 |
+| `Surge/Scripts/` | 面板/脚本：网络延迟、配置重载、机场信息（已审阅并汉化） |
+| `Surge/本地模块示例.sgmodule` | 本地模块示例：私人域名、内网网段等放这里 |
+
+### 1. 在 Sub-Store 里新建文件
+
+1. Sub-Store →「文件」→ 新建：
+   - 名称：`surge.conf`
+   - 类型：文件
+   - 来源：远程，地址填
+     ```
+     https://raw.githubusercontent.com/darktuJJ/clash-surge-rules/main/Surge/Surge.conf
+     ```
+   - 合并来源：不合并
+2. 「脚本操作」里粘贴 `Surge/Sub-Store脚本.js` 的全部内容。
+3. 保存后复制这个文件的下载链接，回到脚本，把 `MANAGED_URL` 的占位文本 `这里填你的 Sub-Store 文件链接` 换成它，再保存。
+   如果组合订阅不叫「组合订阅」，同时改 `COLLECTION_NAME`。
+4. 预览一下，确认首行是 `#!MANAGED-CONFIG ...`，`[Proxy]` 下面是节点。
+
+### 2. 在 iPhone / Mac 上订阅
+
+Surge →「配置」→「从 URL 下载配置」，填上一步的 Sub-Store 文件链接。之后每 12 小时自动更新（`interval=43200`），
+也可以在配置列表里手动更新。iPhone 和 Mac 用同一个链接即可。
+
+### 3. MITM 证书只在本地生成
+
+模板只开了 `duckduckgo.com`（Safari 搜索快捷指令）和 `sub.store` 的解密。每台设备各自在 Surge →「HTTPS 解密」→
+「生成新的 CA 证书」并安装信任。托管配置是只读的，Surge 会把证书存进本地（模块或本地配置），
+**证书和 `ca-passphrase` / `ca-p12` 绝对不要提交到仓库**。HTTP-API 密码同理，只在本地设置。
+
+### 4. 本地模块放私人规则
+
+把 `Surge/本地模块示例.sgmodule` 的内容复制到 Surge →「模块」→「新建本地模块」，把 `你的DDNS域名`、`你的内网网段`
+换成自己的内容并启用。模块里的规则会排在配置规则前面。机场流量信息（`http://sub.info?url=...`）的策略组也放在这里。

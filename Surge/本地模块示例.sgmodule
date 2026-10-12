@@ -1,0 +1,16 @@
+#!name=本地私人规则（示例）
+#!desc=把私人域名、内网网段等放在本地模块里，不要提交到仓库。复制本文件到 Surge 的「模块」→「新建本地模块」，把占位符换成你自己的内容。
+
+[General]
+# 可选：HTTP-API 密码只在本地设置
+# http-api = 你的密码@127.0.0.1:6171
+
+[Rule]
+# 私人 DDNS 域名直连
+DOMAIN-SUFFIX,你的DDNS域名,DIRECT
+# 家庭内网网段直连
+IP-CIDR,你的内网网段,DIRECT,no-resolve
+
+# 可选：机场流量信息（订阅链接需 URL 编码）
+# [Proxy Group]
+# 机场信息 = select, policy-path=http://sub.info?url=URL编码后的订阅链接&reset_day=1&alert=1&title=机场, update-interval=3600
