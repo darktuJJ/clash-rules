@@ -63,7 +63,7 @@
 | 文件 | 说明 | 作用范围 | 在订阅覆写列表中的位置 |
 |------|------|----------|------------------------|
 | `个人合并覆写.yaml` | 新增「AI专线」「Cursor链路」两个策略组；合并了直连、DeepSeek 直连、AI、Cursor、其他代理规则；拦截 STUN | 不勾选全局，只挂在用 ACL4SSR 模板的订阅上 | 监听端口类覆写之后、会生成 IN-PORT 规则的覆写之前 |
-| `DNS与QUIC防护.yaml` | `dns!` 整段替换：fake-ip，境外 DNS 经「漏网之鱼」走 DoT，国内用 doh.pub；拒绝 UDP 443（QUIC） | 每个订阅都可以挂 | 最后 |
+| `DNS与QUIC防护.yaml` | `dns!` 整段替换：fake-ip，境外 DNS 经「漏网之鱼」走 DoT，国内用 doh.pub + 阿里 DoH（互为备份，含 direct-nameserver）；拒绝 UDP 443（QUIC） | 每个订阅都可以挂 | 最后 |
 | `开启节点UDP.js` | 给指定节点打开 `udp: true`，避免 UDP 回落直连 | 同「个人合并覆写」 | 会生成 IN-PORT 规则的覆写之前 |
 
 ### 为什么顺序重要
