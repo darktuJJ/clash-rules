@@ -548,7 +548,7 @@ rule-providers:
   ChinaDomain:
     url: https://testingcf.jsdelivr.net/gh/ACL4SSR/ACL4SSR@master/Clash/ChinaDomain.list
     path: ./ruleset/ChinaDomain.list
-    behavior: domain
+    behavior: classical
     interval: 86400
     format: text
     type: http
