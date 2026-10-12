@@ -150,7 +150,13 @@ git push
      https://raw.githubusercontent.com/darktuJJ/clash-surge-rules/main/Surge/Surge.conf
      ```
    - 合并来源：不合并
-2. 「脚本操作」里粘贴 `Surge/Sub-Store脚本.js` 的全部内容。
+2. 「脚本操作」里添加 `Surge/Sub-Store脚本.js`，两种方式任选：
+   - **链接（推荐）**：选「链接」，填
+     ```
+     https://raw.githubusercontent.com/darktuJJ/clash-surge-rules/main/Surge/Sub-Store%E8%84%9A%E6%9C%AC.js
+     ```
+     仓库里的脚本更新后会自动跟着用新版。这种方式改不了脚本里的 `MANAGED_URL`，第 3 步要改用链接参数传入：在链接末尾加 `#noCache&url=URL编码后的文件链接`。
+   - **粘贴**：选「脚本」，粘贴文件的全部内容。这是一份固定副本，仓库更新后需要重新粘贴。
 3. 保存后复制这个文件的下载链接，回到脚本，把 `MANAGED_URL` 的占位文本 `这里填你的 Sub-Store 文件链接` 换成它，再保存。
    如果组合订阅不叫「组合订阅」，同时改 `COLLECTION_NAME`。
 4. 预览一下，确认首行是 `#!MANAGED-CONFIG ...`，`[Proxy]` 下面是节点。
