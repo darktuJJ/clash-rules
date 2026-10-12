@@ -27,10 +27,13 @@ const proxies = await produceArtifact({
   platform: 'Surge',
 });
 
-if (!conf.includes('#{proxies}')) {
+if (!/^#\{proxies\}[ \t]*$/m.test(conf)) {
   throw new Error('模板中找不到 #{proxies} 占位符');
 }
-conf = conf.replace('#{proxies}', proxies);
+if (!proxies || !proxies.trim()) {
+  throw new Error('没有取到「' + COLLECTION_NAME + '」的节点，请检查组合订阅名称');
+}
+conf = conf.replace(/^#\{proxies\}[ \t]*$/m, () => proxies.trim());
 
 // 去掉模板里可能残留的 MANAGED-CONFIG 行，再在首行加上
 conf = conf.replace(/^#!MANAGED-CONFIG.*\r?\n/m, '');
