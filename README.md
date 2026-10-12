@@ -114,7 +114,7 @@ git push
 
 | 文件 | 说明 |
 |------|------|
-| `Surge/Surge.conf` | 配置模板：策略组按地区正则自动筛选节点，规则用 ConnersHua/RuleGo |
+| `Surge/Surge.conf` | 配置模板：策略组、规则集与顺序对齐 Clash 模板 `ACL4SSR_Online_Full_WithIcon.yaml`（规则集用 raw.githubusercontent 地址），并移植了个人覆写里的通用部分（「AI专线」「Cursor链路」、STUN 拦截、AI / Cursor 域名） |
 | `Surge/Sub-Store脚本.js` | Sub-Store 文件脚本：填入组合订阅节点，并加上 `#!MANAGED-CONFIG` 首行 |
 | `Surge/Scripts/` | 面板/脚本：网络延迟、配置重载、机场信息（已审阅并汉化） |
 | `Surge/本地模块示例.sgmodule` | 本地模块示例：私人域名、内网网段等放这里 |
@@ -148,4 +148,14 @@ Surge →「配置」→「从 URL 下载配置」，填上一步的 Sub-Store �
 ### 4. 本地模块放私人规则
 
 把 `Surge/本地模块示例.sgmodule` 的内容复制到 Surge →「模块」→「新建本地模块」，把 `你的DDNS域名`、`你的内网网段`
-换成自己的内容并启用。模块里的规则会排在配置规则前面。机场流量信息（`http://sub.info?url=...`）的策略组也放在这里。
+换成自己的内容并启用。模块里的规则会排在配置规则前面。
+
+> 注意：Surge 模块**不能**新增或修改策略组，模块里的规则也**只能用 DIRECT / REJECT**。
+> 因此「指定某个节点」的私人规则、机场流量信息（`http://sub.info?url=...`）策略组都放不进模块，
+> 需要在设备本地另建配置（例如用 `#!include` 引用托管配置的 `[Proxy]`，自己写 `[Proxy Group]` / `[Rule]`）。
+
+### 5. 策略组对照
+
+策略组名称与 Clash 模板一致（节点选择、手动切换、自动选择、电报消息、OpenAi、AI-UNHK、油管视频、奈飞视频……漏网之鱼，
+以及 香港/日本/美国/台湾/狮城/韩国/奈飞节点）。Surge 额外有「谷歌云」智能组（自建 GCP 节点）和个人覆写移植的「AI专线」「Cursor链路」。
+Clash 的 `GLOBAL` 组在 Surge 里没有对应，已省略。
