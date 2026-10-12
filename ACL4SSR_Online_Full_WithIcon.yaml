@@ -1,13 +1,18 @@
 # ============================================================
-# ACL4SSR_Online_Full_WithIcon.yaml（darktuJJ 修正版）
+# ACL4SSR_Online_Full_WithIcon.yaml（mihomo 修正版）
+# 维护：clash-rules 项目（https://github.com/darktuJJ/clash-rules）
 # 上游来源：https://raw.githubusercontent.com/mihomo-party-org/override-hub/main/yaml/ACL4SSR_Online_Full_WithIcon.yaml
 # 同步日期：2026-10-12
-# 说明：保持上游结构不变，仅修正以下源自本文件的问题（改动处均以【修改】注释标出）：
+# 说明：保持上游策略组和规则顺序不变，只修正在 mihomo 下不生效或有副作用的地方：
 #   1. rule-providers.ChinaCompanyIp：behavior 由 ipcidr 改为 classical
 #      （列表内容为 classical 格式，原写法在 mihomo 下加载 0 条）
-#   2. rules：RULE-SET,ChinaCompanyIp 追加 no-resolve
-#   3. rules：GEOIP,CN 追加 no-resolve
-# 未加入任何 AI 规则或策略组改动，这些放在 Clash Party 本地覆写中（见 overrides/ 目录）。
+#   2. rule-providers.ChinaDomain：behavior 由 domain 改为 classical
+#      （列表中混有 IP 段等 classical 规则，按 domain 解析时不生效）
+#   3. rules：RULE-SET,ChinaCompanyIp 追加 no-resolve
+#   4. rules：GEOIP,CN 追加 no-resolve
+#   5. ChinaMedia / ProxyMedia / Download 规则集改用本项目 ACL4SSR/ 目录下的精简版，
+#      去掉 mihomo 不支持的 URL-REGEX 规则
+# 不包含 AI 分流等个性化改动，这些作为可选的 Clash Party 覆写放在 overrides/ 目录。
 # ============================================================
 proxy-groups:
   - name: 节点选择
