@@ -574,6 +574,14 @@ rules:
   - "RULE-SET,UnBan,全球直连"
   - "RULE-SET,BanAD,广告拦截"
   - "RULE-SET,BanProgramAD,应用净化"
+  # 【修改】.cn 域名在 Microsoft 规则集之前直连（放在广告拦截之后，广告仍会被拒绝）
+  - "DOMAIN-SUFFIX,msn.cn,全球直连"
+  - "DOMAIN-SUFFIX,cn,全球直连"
+  # 【修改】国内服务及证书校验域名直连
+  - "DOMAIN-SUFFIX,volces.com,全球直连"
+  - "DOMAIN-SUFFIX,weixinbridge.com,全球直连"
+  - "DOMAIN-SUFFIX,lencr.org,全球直连"
+  - "DOMAIN-SUFFIX,digicert.com,全球直连"
   - "RULE-SET,GoogleFCM,谷歌FCM"
   - "RULE-SET,GoogleCN,全球直连"
   - "RULE-SET,SteamCN,全球直连"
